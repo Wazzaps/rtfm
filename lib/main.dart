@@ -1,4 +1,3 @@
-import 'dart:ffi';
 import 'dart:io';
 import 'dart:ui';
 
@@ -40,13 +39,13 @@ class CustomBoxShadow extends BoxShadow {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
-  Widget _sidebarRow(IconData icon, String text) {
+  Widget _sidebarRow(IconData icon, String text, {Color iconColor = Colors.white}) {
     return Container(
       height: 22.0,
       alignment: Alignment.centerLeft,
       child: Row(children: [
         Container(width: 1),
-        Icon(icon, color: Colors.white, size: 16.0),
+        Icon(icon, color: iconColor, size: 16.0),
         Container(width: 4),
         Padding(
           padding: const EdgeInsets.only(top: 0.0),
@@ -103,7 +102,7 @@ class MyApp extends StatelessWidget {
 
   Widget _sidebarCategory(String text) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8.0),
+      padding: const EdgeInsets.only(top: 8.0, bottom: 2.0),
       child: Text(
         text,
         style: const TextStyle(
@@ -166,15 +165,15 @@ class MyApp extends StatelessWidget {
                       _sidebarCategory("Favorites"),
                       _sidebarRow(Icons.history_rounded, "Recent"),
                       _sidebarRow(Icons.home_rounded, "Home"),
-                      _sidebarRow(Icons.description_rounded, "Documents"),
+                      _sidebarRow(Icons.description_rounded, "Documents", iconColor: const Color(0xFFA1D7F3)),
                       _sidebarRow(Icons.download_rounded, "Downloads"),
-                      _sidebarRow(Icons.delete_rounded, "Trash"),
-                      _sidebarRow(Icons.folder_rounded, "Custom Folder"),
+                      _sidebarRow(Icons.delete_rounded, "Trash", iconColor: const Color(0xFF8698A1)),
+                      _sidebarRow(Icons.folder_rounded, "Custom Folder", iconColor: const Color(0xFFF0BE80)),
                       _sidebarCategory("Tags"),
                       _sidebarTag(const Color(0xFFFF6464), "Work"),
                       _sidebarTag(const Color(0xFF64C7FF), "Research"),
                       _sidebarTag(const Color(0xFFDBFF74), "Personal"),
-                      _sidebarCategory("Drives"),
+                      _sidebarCategory("Disks"),
                       _sidebarRow(Icons.desktop_windows_rounded, "Greg's PC"),
                       _sidebarRow(Icons.history_rounded, "Greg's Phone"),
                       _sidebarRow(Icons.cloud, "Google Drive"),
@@ -205,7 +204,140 @@ class MyApp extends StatelessWidget {
                           left: BorderSide(color: Colors.black.withAlpha(51), width: 2),
                         ),
                       ),
-                      child: const FileListView(),
+                      child: const FileListView(columns: [
+                        FileListColumn("Name", 200, type: ColumnType.tree, expands: true),
+                        FileListColumn("Last Modified", 135, type: ColumnType.stringMuted),
+                        FileListColumn("Size", 80, type: ColumnType.stringMuted),
+                        FileListColumn("Type", 110, type: ColumnType.stringMuted),
+                      ], data: [
+                        [
+                          FileListTree(
+                            name: "A Folder",
+                            icon: Icons.folder_rounded,
+                            iconColor: Color(0xFFF0BE80),
+                            isFolder: true,
+                            isFolderExpanded: true,
+                          ),
+                          "Yesterday at 10:45",
+                          "2 items",
+                          "Folder",
+                        ],
+                        [
+                          FileListTree(
+                            name: "Another Folder aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                            icon: Icons.folder_rounded,
+                            iconColor: Color(0xFFF0BE80),
+                            isFolder: true,
+                            isFolderExpanded: true,
+                            depth: 1,
+                          ),
+                          "Yesterday at 10:19",
+                          "1 item",
+                          "Folder",
+                        ],
+                        [
+                          FileListTree(
+                            name:
+                                "A File Inside 2 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                            extension: ".txt",
+                            icon: Icons.description_rounded,
+                            iconColor: Color(0xFFA1D7F3),
+                            depth: 2,
+                          ),
+                          "Yesterday at 10:21",
+                          "10 bytes",
+                          "Plain Text",
+                        ],
+                        [
+                          FileListTree(
+                            name: "A File Inside",
+                            extension: ".txt",
+                            icon: Icons.description_rounded,
+                            iconColor: Color(0xFFA1D7F3),
+                            depth: 1,
+                          ),
+                          "Today at 09:10",
+                          "1.2 KiB",
+                          "Plain Text",
+                        ],
+                        [
+                          FileListTree(
+                            name: "File 1",
+                            extension: ".txt",
+                            icon: Icons.description_rounded,
+                            iconColor: Color(0xFFA1D7F3),
+                          ),
+                          "Today at 09:01",
+                          "120 KiB",
+                          "Plain Text",
+                        ],
+                        [
+                          FileListTree(
+                            name: "File 2",
+                            extension: ".txt",
+                            icon: Icons.description_rounded,
+                            iconColor: Color(0xFFA1D7F3),
+                          ),
+                          "Today at 09:02",
+                          "1 MiB",
+                          "Plain Text",
+                        ],
+                        [
+                          FileListTree(
+                            name: "File 3",
+                            extension: ".txt",
+                            icon: Icons.description_rounded,
+                            iconColor: Color(0xFFA1D7F3),
+                          ),
+                          "Today at 09:03",
+                          "20 bytes",
+                          "Plain Text",
+                        ],
+                        [
+                          FileListTree(
+                            name: "File 4",
+                            extension: ".txt",
+                            icon: Icons.description_rounded,
+                            iconColor: Color(0xFFA1D7F3),
+                          ),
+                          "Today at 09:04",
+                          "30 bytes",
+                          "Plain Text",
+                        ],
+                        [
+                          FileListTree(
+                            name: "File 5",
+                            extension: ".txt",
+                            icon: Icons.description_rounded,
+                            iconColor: Color(0xFFA1D7F3),
+                          ),
+                          "Today at 09:05",
+                          "40 bytes",
+                          "Plain Text",
+                        ],
+                        [
+                          FileListTree(
+                            name: "File 6",
+                            extension: ".txt",
+                            icon: Icons.description_rounded,
+                            iconColor: Color(0xFFA1D7F3),
+                          ),
+                          "Today at 09:06",
+                          "50 bytes",
+                          "Plain Text",
+                        ],
+                        [
+                          FileListTree(
+                            name: "Some Movie",
+                            extension: ".mov",
+                            icon: Icons.movie_rounded,
+                            iconColor: Color(0xFFFFFFFF),
+                          ),
+                          "Today at 09:07",
+                          "1.2 GiB",
+                          "QuickTime Video",
+                        ],
+                      ]),
                     ),
                   ),
                 )
@@ -215,6 +347,7 @@ class MyApp extends StatelessWidget {
         ],
       ),
       isDarkTheme: true,
+      isTransparencyDisabled: false,
     );
   }
 }
@@ -295,7 +428,7 @@ class BIconButtons extends StatelessWidget {
                 color: Colors.white,
                 size: 28,
               ),
-              Container(width: 1, color: Color(0x4D000000)),
+              Container(width: 1, color: const Color(0x4D000000)),
               const Icon(
                 Icons.keyboard_arrow_right_rounded,
                 color: Colors.white,
@@ -345,15 +478,21 @@ class ButtonWrapper extends StatelessWidget {
   }
 }
 
-void readWindowPosition() {
-  DynamicLibrary.open('libGLES_v3.so');
-}
+// void readWindowPosition() {
+//   DynamicLibrary.open('libGLES_v3.so');
+// }
 
 class BoldApp extends StatefulWidget {
   final Widget child;
   final bool isDarkTheme;
+  final bool isTransparencyDisabled;
 
-  const BoldApp({required this.child, this.isDarkTheme = true, Key? key}) : super(key: key);
+  const BoldApp({
+    Key? key,
+    required this.child,
+    this.isDarkTheme = true,
+    this.isTransparencyDisabled = false,
+  }) : super(key: key);
 
   @override
   State<BoldApp> createState() => _BoldAppState();
@@ -425,17 +564,24 @@ class _BoldAppState extends State<BoldApp> {
                       // Mica layer wrapping child
                       ClipRRect(
                         borderRadius: BorderRadius.circular(isMaximized ? 0 : 10),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 200.0, sigmaY: 200.0, tileMode: TileMode.mirror),
-                          child: Container(
-                            child: widget.child,
+                        child: widget.isTransparencyDisabled
+                            ? Container(
+                                child: widget.child,
 
-                            // Brightness layer depending on theme
-                            color: widget.isDarkTheme
-                                ? const Color.fromARGB(200, 30, 30, 30)
-                                : Colors.white.withAlpha(180),
-                          ),
-                        ),
+                                // Brightness layer depending on theme
+                                color: widget.isDarkTheme ? const Color(0xFF1E1E1E) : const Color(0xFFF1F1F1),
+                              )
+                            : BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 200.0, sigmaY: 200.0, tileMode: TileMode.mirror),
+                                child: Container(
+                                  child: widget.child,
+
+                                  // Brightness layer depending on theme
+                                  color: widget.isDarkTheme
+                                      ? const Color.fromARGB(200, 30, 30, 30)
+                                      : Colors.white.withAlpha(180),
+                                ),
+                              ),
                       ),
 
                       // Window shimmer

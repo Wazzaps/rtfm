@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -8,6 +9,9 @@ import 'package:flutter/painting.dart';
 // import 'package:native_winpos/native_winpos.dart';
 import 'package:rtfm/listview.dart';
 import 'package:rtfm/pathbar.dart';
+import 'package:rxdart/transformers.dart';
+
+import 'fileinterface.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,8 +40,33 @@ class CustomBoxShadow extends BoxShadow {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final Stream<List<DirViewRow>> _dirStream;
+  String dirPath = "/home/david/code/bolddata";
+
+  @override
+  void initState() {
+    var dirView = DirView(dirPath);
+    var renderer = dirView.render();
+    _dirStream = renderer.stream.debounceTime(const Duration(milliseconds: 50));
+  }
+
+  @override
+  void didUpdateWidget(MyApp oldWidget) {
+    print("_MyAppState.didUpdateWidget");
+  }
+
+  @override
+  void dispose() {
+    // _dirSub.cancel();
+  }
 
   Widget _sidebarRow(IconData icon, String text, {Color iconColor = Colors.white}) {
     return Container(
@@ -125,28 +154,32 @@ class MyApp extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(4.0),
             child: Row(
-              children: const [
-                BIconButtons(),
-                Spacer(),
-                PathBar(),
-                Spacer(),
-                Padding(
+              children: [
+                const BIconButtons(),
+                const Spacer(),
+                PathBar(
+                  path: dirPath.replaceAll("/home/david/", "Home/"),
+                  rootIcon: Icons.home_rounded,
+                  currentIcon: Icons.folder_rounded,
+                ),
+                const Spacer(),
+                const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 3.0),
                   child: BIconButton(Icons.search_rounded),
                 ),
-                Padding(
+                const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 3.0),
                   child: BIconButton(Icons.grid_view_rounded),
                 ),
-                Padding(
+                const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 3.0),
                   child: BIconButton(Icons.splitscreen_rounded),
                 ),
-                Padding(
+                const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 3.0),
                   child: BIconButton(Icons.more_horiz),
                 ),
-                WindowButtons(),
+                const WindowButtons(),
               ],
             ),
           ),
@@ -174,8 +207,8 @@ class MyApp extends StatelessWidget {
                       _sidebarTag(const Color(0xFF64C7FF), "Research"),
                       _sidebarTag(const Color(0xFFDBFF74), "Personal"),
                       _sidebarCategory("Disks"),
-                      _sidebarRow(Icons.desktop_windows_rounded, "Greg's PC"),
-                      _sidebarRow(Icons.history_rounded, "Greg's Phone"),
+                      _sidebarRow(Icons.desktop_windows_rounded, "David's PC"),
+                      _sidebarRow(Icons.history_rounded, "David's Phone"),
                       _sidebarRow(Icons.cloud, "Google Drive"),
                       _sidebarRow(Icons.cloud, "Dropbox"),
                       _sidebarRow(Icons.cloud, "John's NAS"),
@@ -200,144 +233,217 @@ class MyApp extends StatelessWidget {
                       foregroundDecoration: BoxDecoration(
                         // Inner shimmer
                         border: Border(
-                          top: BorderSide(color: Colors.black.withAlpha(51), width: 2),
-                          left: BorderSide(color: Colors.black.withAlpha(51), width: 2),
+                          top: BorderSide(color: Colors.black.withAlpha(51), width: 1),
+                          left: BorderSide(color: Colors.black.withAlpha(51), width: 1),
                         ),
                       ),
-                      child: const FileListView(columns: [
-                        FileListColumn("Name", 200, type: ColumnType.tree, expands: true),
-                        FileListColumn("Last Modified", 135, type: ColumnType.stringMuted),
-                        FileListColumn("Size", 80, type: ColumnType.stringMuted),
-                        FileListColumn("Type", 110, type: ColumnType.stringMuted),
-                      ], data: [
-                        [
-                          FileListTree(
-                            name: "A Folder",
-                            icon: Icons.folder_rounded,
-                            iconColor: Color(0xFFF0BE80),
-                            isFolder: true,
-                            isFolderExpanded: true,
-                          ),
-                          "Yesterday at 10:45",
-                          "2 items",
-                          "Folder",
-                        ],
-                        [
-                          FileListTree(
-                            name: "Another Folder aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                            icon: Icons.folder_rounded,
-                            iconColor: Color(0xFFF0BE80),
-                            isFolder: true,
-                            isFolderExpanded: true,
-                            depth: 1,
-                          ),
-                          "Yesterday at 10:19",
-                          "1 item",
-                          "Folder",
-                        ],
-                        [
-                          FileListTree(
-                            name:
-                                "A File Inside 2 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-                            extension: ".txt",
-                            icon: Icons.description_rounded,
-                            iconColor: Color(0xFFA1D7F3),
-                            depth: 2,
-                          ),
-                          "Yesterday at 10:21",
-                          "10 bytes",
-                          "Plain Text",
-                        ],
-                        [
-                          FileListTree(
-                            name: "A File Inside",
-                            extension: ".txt",
-                            icon: Icons.description_rounded,
-                            iconColor: Color(0xFFA1D7F3),
-                            depth: 1,
-                          ),
-                          "Today at 09:10",
-                          "1.2 KiB",
-                          "Plain Text",
-                        ],
-                        [
-                          FileListTree(
-                            name: "File 1",
-                            extension: ".txt",
-                            icon: Icons.description_rounded,
-                            iconColor: Color(0xFFA1D7F3),
-                          ),
-                          "Today at 09:01",
-                          "120 KiB",
-                          "Plain Text",
-                        ],
-                        [
-                          FileListTree(
-                            name: "File 2",
-                            extension: ".txt",
-                            icon: Icons.description_rounded,
-                            iconColor: Color(0xFFA1D7F3),
-                          ),
-                          "Today at 09:02",
-                          "1 MiB",
-                          "Plain Text",
-                        ],
-                        [
-                          FileListTree(
-                            name: "File 3",
-                            extension: ".txt",
-                            icon: Icons.description_rounded,
-                            iconColor: Color(0xFFA1D7F3),
-                          ),
-                          "Today at 09:03",
-                          "20 bytes",
-                          "Plain Text",
-                        ],
-                        [
-                          FileListTree(
-                            name: "File 4",
-                            extension: ".txt",
-                            icon: Icons.description_rounded,
-                            iconColor: Color(0xFFA1D7F3),
-                          ),
-                          "Today at 09:04",
-                          "30 bytes",
-                          "Plain Text",
-                        ],
-                        [
-                          FileListTree(
-                            name: "File 5",
-                            extension: ".txt",
-                            icon: Icons.description_rounded,
-                            iconColor: Color(0xFFA1D7F3),
-                          ),
-                          "Today at 09:05",
-                          "40 bytes",
-                          "Plain Text",
-                        ],
-                        [
-                          FileListTree(
-                            name: "File 6",
-                            extension: ".txt",
-                            icon: Icons.description_rounded,
-                            iconColor: Color(0xFFA1D7F3),
-                          ),
-                          "Today at 09:06",
-                          "50 bytes",
-                          "Plain Text",
-                        ],
-                        [
-                          FileListTree(
-                            name: "Some Movie",
-                            extension: ".mov",
-                            icon: Icons.movie_rounded,
-                            iconColor: Color(0xFFFFFFFF),
-                          ),
-                          "Today at 09:07",
-                          "1.2 GiB",
-                          "QuickTime Video",
-                        ],
-                      ]),
+                      child: StreamBuilder<List<DirViewRow>>(
+                          stream: _dirStream,
+                          initialData: const [],
+                          builder: (context, snapshot) {
+                            List<List<Object>> dirData = [];
+                            if (snapshot.hasData) {
+                              dirData = snapshot.data!.map((f) {
+                                switch (f.type) {
+                                  case FileType.folder:
+                                    return [
+                                      FileListTree(
+                                        name: f.name,
+                                        extension: f.extension,
+                                        icon: Icons.folder_rounded,
+                                        iconColor: Color(0xFFF0BE80),
+                                        isFolder: true,
+                                        isFolderExpanded: false,
+                                      ),
+                                      f.lastModified != null ? "${f.lastModified}" : "...",
+                                      f.size != null ? "${f.size} items" : "...",
+                                      "Folder",
+                                    ];
+                                  case FileType.file:
+                                    return [
+                                      FileListTree(
+                                        name: f.name,
+                                        extension: f.extension,
+                                        icon: Icons.description_rounded,
+                                        iconColor: Color(0xFFA1D7F3),
+                                      ),
+                                      f.lastModified != null ? "${f.lastModified}" : "...",
+                                      f.size != null ? "${f.size} bytes" : "...",
+                                      "File",
+                                    ];
+                                  case FileType.symlink:
+                                    return [
+                                      FileListTree(
+                                        name: f.name,
+                                        extension: f.extension,
+                                        icon: Icons.link,
+                                        iconColor: Color(0xFFBABABA),
+                                      ),
+                                      f.lastModified != null ? "${f.lastModified}" : "...",
+                                      "",
+                                      "Link",
+                                    ];
+                                  default:
+                                    return [
+                                      FileListTree(
+                                        name: f.name,
+                                        extension: f.extension,
+                                        icon: Icons.error_rounded,
+                                        iconColor: Color(0xFFB96034),
+                                      ),
+                                      f.lastModified != null ? "${f.lastModified}" : "...",
+                                      "...",
+                                      "Folder",
+                                    ];
+                                }
+                              }).toList();
+                              dirData.sort((a, b) {
+                                if ((a.first as FileListTree?)!.isFolder != (b.first as FileListTree?)!.isFolder) {
+                                  return (a.first as FileListTree?)!.isFolder ? -1 : 1;
+                                }
+                                return (a.first as FileListTree?)!.name.compareTo((b.first as FileListTree?)!.name);
+                              });
+                            }
+                            return FileListView(
+                              columns: [
+                                FileListColumn("Name", 200, type: ColumnType.tree, expands: true),
+                                FileListColumn("Last Modified", 175, type: ColumnType.stringMuted),
+                                FileListColumn("Size", 80, type: ColumnType.stringMuted),
+                                FileListColumn("Type", 110, type: ColumnType.stringMuted),
+                              ],
+                              data: dirData,
+                              // data: [
+                              //   [
+                              //     FileListTree(
+                              //       name: "A Folder",
+                              //       icon: Icons.folder_rounded,
+                              //       iconColor: Color(0xFFF0BE80),
+                              //       isFolder: true,
+                              //       isFolderExpanded: true,
+                              //     ),
+                              //     "Yesterday at 10:45",
+                              //     "2 items",
+                              //     "Folder",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name:
+                              //           "Another Folder Long Text Long Text Long Text Long Text Long Text Long Text Long Text Long Text",
+                              //       icon: Icons.folder_rounded,
+                              //       iconColor: Color(0xFFF0BE80),
+                              //       isFolder: true,
+                              //       isFolderExpanded: true,
+                              //       depth: 1,
+                              //     ),
+                              //     "Yesterday at 10:19",
+                              //     "1 item",
+                              //     "Folder",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name:
+                              //           "A File Inside 2 Long Text Long Text Long Text Long Text Long Text Long Text Long Text Long Text",
+                              //       extension: ".txt",
+                              //       icon: Icons.description_rounded,
+                              //       iconColor: Color(0xFFA1D7F3),
+                              //       depth: 2,
+                              //     ),
+                              //     "Yesterday at 10:21",
+                              //     "10 bytes",
+                              //     "Plain Text",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name: "A File Inside",
+                              //       extension: ".txt",
+                              //       icon: Icons.description_rounded,
+                              //       iconColor: Color(0xFFA1D7F3),
+                              //       depth: 1,
+                              //     ),
+                              //     "Today at 09:10",
+                              //     "1.2 KiB",
+                              //     "Plain Text",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name: "File 1",
+                              //       extension: ".txt",
+                              //       icon: Icons.description_rounded,
+                              //       iconColor: Color(0xFFA1D7F3),
+                              //     ),
+                              //     "Today at 09:01",
+                              //     "120 KiB",
+                              //     "Plain Text",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name: "File 2",
+                              //       extension: ".txt",
+                              //       icon: Icons.description_rounded,
+                              //       iconColor: Color(0xFFA1D7F3),
+                              //     ),
+                              //     "Today at 09:02",
+                              //     "1 MiB",
+                              //     "Plain Text",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name: "File 3",
+                              //       extension: ".txt",
+                              //       icon: Icons.description_rounded,
+                              //       iconColor: Color(0xFFA1D7F3),
+                              //     ),
+                              //     "Today at 09:03",
+                              //     "20 bytes",
+                              //     "Plain Text",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name: "File 4",
+                              //       extension: ".txt",
+                              //       icon: Icons.description_rounded,
+                              //       iconColor: Color(0xFFA1D7F3),
+                              //     ),
+                              //     "Today at 09:04",
+                              //     "30 bytes",
+                              //     "Plain Text",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name: "File 5",
+                              //       extension: ".txt",
+                              //       icon: Icons.description_rounded,
+                              //       iconColor: Color(0xFFA1D7F3),
+                              //     ),
+                              //     "Today at 09:05",
+                              //     "40 bytes",
+                              //     "Plain Text",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name: "File 6",
+                              //       extension: ".txt",
+                              //       icon: Icons.description_rounded,
+                              //       iconColor: Color(0xFFA1D7F3),
+                              //     ),
+                              //     "Today at 09:06",
+                              //     "50 bytes",
+                              //     "Plain Text",
+                              //   ],
+                              //   [
+                              //     FileListTree(
+                              //       name: "Some Movie",
+                              //       extension: ".mov",
+                              //       icon: Icons.movie_rounded,
+                              //       iconColor: Color(0xFFFFFFFF),
+                              //     ),
+                              //     "Today at 09:07",
+                              //     "1.2 GiB",
+                              //     "QuickTime Video",
+                              //   ],
+                              // ]
+                            );
+                          }),
                     ),
                   ),
                 )
@@ -505,10 +611,10 @@ class _BoldAppState extends State<BoldApp> {
   @override
   Widget build(BuildContext context) {
     var backgrounds = [
+      FileImage(File("/home/david/Pictures/Wallpapers/void_4k_desktop.jpg")),
       FileImage(File("/home/david/Pictures/Wallpapers/calidity_4k.jpg")),
       FileImage(File("/home/david/Pictures/Wallpapers/pretty-colors-fhd.png")),
       FileImage(File("/home/david/Pictures/Wallpapers/submerged_4k_desktop.jpg")),
-      FileImage(File("/home/david/Pictures/Wallpapers/void_4k_desktop.jpg")),
       FileImage(File("/home/david/Pictures/Wallpapers/stress.png")),
     ];
     return MediaQuery.fromWindow(

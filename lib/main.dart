@@ -691,10 +691,13 @@ class _BoldAppState extends State<BoldApp> {
                       ),
 
                       // Window shimmer
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(isMaximized ? 0 : 10),
-                          border: Border.all(color: Colors.white.withAlpha(isMaximized ? 0 : 40), width: 1),
+                      IgnorePointer(
+                        ignoring: true,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(isMaximized ? 0 : 10),
+                            border: Border.all(color: Colors.white.withAlpha(isMaximized ? 0 : 40), width: 1),
+                          ),
                         ),
                       )
                     ],

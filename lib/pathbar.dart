@@ -35,25 +35,39 @@ class PathBar extends StatelessWidget {
       widgets.add(Icon(rootIcon, color: Colors.white.withOpacity(0.8), size: 18));
       widgets.add(Container(width: 4));
 
-      for (String part in parts) {
-        widgets.add(_pathComponent(part));
+      for (MapEntry<int, String> _part in parts.asMap().entries) {
+        String part = _part.value;
+
+        widgets.add(GestureDetector(
+          onTap: () {
+            print("Navigate: ${parts.getRange(0, _part.key + 1).join('/')}");
+          },
+          behavior: HitTestBehavior.translucent,
+          child: _pathComponent(part),
+        ));
         widgets.add(_slash());
       }
     }
 
-    widgets.add(ButtonWrapper(
-      child: SizedBox(
-        height: 30,
-        child: Row(
-          children: [
-            Container(width: 9),
-            Icon(parts.isEmpty ? rootIcon : currentIcon, color: Colors.white, size: 18),
-            Container(width: 4),
-            Text(last),
-            Container(width: 2),
-            const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
-            Container(width: 4),
-          ],
+    widgets.add(GestureDetector(
+      onTap: () {
+        print("open dir menu");
+      },
+      behavior: HitTestBehavior.translucent,
+      child: ButtonWrapper(
+        child: SizedBox(
+          height: 30,
+          child: Row(
+            children: [
+              Container(width: 9),
+              Icon(parts.isEmpty ? rootIcon : currentIcon, color: Colors.white, size: 18),
+              Container(width: 4),
+              Text(last),
+              Container(width: 2),
+              const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 16),
+              Container(width: 4),
+            ],
+          ),
         ),
       ),
     ));

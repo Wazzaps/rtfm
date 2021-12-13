@@ -1,8 +1,10 @@
 # RT File Manager (Acronym tbd)
 
+Linux file manager with inspiration from GNOME Files and MacOS's Finder
+
 Everything is WIP, most features missing!
 
-Made in flutter
+Made in flutter with mostly custom widgets
 
 ## Screenshots
 
@@ -37,7 +39,7 @@ Various I/O Errors show as a persistent bar on top of the file listing
 - [ ] File history (btrfs? custom snapshots?)
 - [ ] Rightclick -> Share (SMB, SFTP, Mail, Phone, )
 - [ ] MacOS like "Services", e.g. encode video, make qr code, etc.
-- [ ] Space used for disks
+- [ ] Storage used indicator for disks
 - [x] Greyed out but persistent extensions
 - [ ] Search/Smart folders (used for tags)
 - [ ] Devices (KDE Connect integration)

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 enum ColumnType {
@@ -19,7 +20,6 @@ class FileListColumn {
 
 class FileListTree {
   final String name;
-  final String extension;
   final bool isFolder;
   final bool isFolderExpanded;
   final IconData icon;
@@ -31,7 +31,6 @@ class FileListTree {
     required this.icon,
     this.iconColor = const Color(0xFFBFC0C0),
     this.depth = 0,
-    this.extension = "",
     this.isFolder = false,
     this.isFolderExpanded = false,
   });
@@ -40,8 +39,20 @@ class FileListTree {
 class FileListView extends StatefulWidget {
   final List<FileListColumn> columns;
   final List<List<dynamic>> data;
+  final void Function(int rowId)? onEntryActivate;
+  final void Function(int rowId)? onEntrySelect;
+  final ScrollController? scrollController;
+  final int? selectedRowIdx;
 
-  const FileListView({Key? key, required this.columns, this.data = const []}) : super(key: key);
+  const FileListView({
+    Key? key,
+    required this.columns,
+    this.data = const [],
+    this.onEntryActivate,
+    this.onEntrySelect,
+    this.scrollController,
+    this.selectedRowIdx,
+  }) : super(key: key);
 
   @override
   State<FileListView> createState() => _FileListViewState();
@@ -198,52 +209,87 @@ class _FileListViewState extends State<FileListView> {
           // Files
           Expanded(
             child: ListView.builder(
+              controller: widget.scrollController,
               itemBuilder: (context, index) {
                 if (index < widget.data.length) {
-                  return Container(
-                    height: 18,
-                    color: (index % 2 == 0) ? const Color(0xFF252628) : const Color(0xFF1E1F21),
-                    child: Row(
-                      children: widget.data[index].asMap().entries.map((e) {
-                        final colMetadata = widget.columns[e.key];
-                        Widget w = const Text("[ERR]");
-
-                        switch (colMetadata.type) {
-                          case ColumnType.tree:
-                            var tree = e.value as FileListTree;
-                            w = _fileRow(
-                              tree.name,
-                              tree.icon,
-                              tree.iconColor,
-                              width: colWidths[e.key].toDouble(),
-                              extension: tree.extension,
-                              isFolder: tree.isFolder,
-                              isFolderExpanded: tree.isFolderExpanded,
-                              depth: tree.depth,
-                            );
-                            break;
-
-                          case ColumnType.string:
-                          case ColumnType.stringMuted:
-                            w = Padding(
-                              padding: const EdgeInsets.only(left: 8.0, right: 2.0),
-                              child: Text(
-                                e.value as String,
-                                style: TextStyle(
-                                  color: colMetadata.type == ColumnType.stringMuted
-                                      ? const Color(0xFF929293)
-                                      : const Color(0xFFFFFFFF),
-                                ),
-                                overflow: TextOverflow.fade,
-                                textWidthBasis: TextWidthBasis.longestLine,
-                                softWrap: false,
-                              ),
-                            );
-                            break;
+                  return GestureDetector(
+                    dragStartBehavior: DragStartBehavior.down,
+                    onDoubleTap: () {},
+                    onDoubleTapDown: (_) {
+                      if (widget.onEntryActivate != null) {
+                        widget.onEntryActivate!(index);
+                      }
+                    },
+                    child: Listener(
+                      onPointerDown: (_) {
+                        if (widget.onEntrySelect != null) {
+                          widget.onEntrySelect!(index);
                         }
+                      },
+                      child: Container(
+                        height: 18,
+                        color: widget.selectedRowIdx == index
+                            ? const Color(0xFF0E3A66)
+                            : (index % 2 == 0)
+                                ? const Color(0xFF252628)
+                                : const Color(0xFF1E1F21),
+                        child: Row(
+                          children: widget.data[index].asMap().entries.map((e) {
+                            final colMetadata = widget.columns[e.key];
+                            Widget w = const Text("[ERR]");
 
-                        return SizedBox(width: colWidths[e.key].toDouble(), child: w);
-                      }).toList(),
+                            switch (colMetadata.type) {
+                              case ColumnType.tree:
+                                var tree = e.value as FileListTree;
+
+                                String name = tree.name;
+                                String extension = "";
+                                if (tree.name.isNotEmpty) {
+                                  if (tree.name[0] == ".") {
+                                    extension = tree.name;
+                                    name = "";
+                                  } else if (!tree.isFolder && tree.name.contains(".")) {
+                                    var parts = tree.name.split(".");
+                                    extension = "." + parts.removeLast();
+                                    name = parts.join(".");
+                                  }
+                                }
+
+                                w = _fileRow(
+                                  name,
+                                  tree.icon,
+                                  tree.iconColor,
+                                  width: colWidths[e.key].toDouble(),
+                                  extension: extension,
+                                  isFolder: tree.isFolder,
+                                  isFolderExpanded: tree.isFolderExpanded,
+                                  depth: tree.depth,
+                                );
+                                break;
+
+                              case ColumnType.string:
+                              case ColumnType.stringMuted:
+                                w = Padding(
+                                  padding: const EdgeInsets.only(left: 8.0, right: 2.0),
+                                  child: Text(
+                                    e.value as String,
+                                    style: TextStyle(
+                                      color: colMetadata.type == ColumnType.stringMuted
+                                          ? const Color(0xFF929293)
+                                          : const Color(0xFFFFFFFF),
+                                    ),
+                                    overflow: TextOverflow.fade,
+                                    textWidthBasis: TextWidthBasis.longestLine,
+                                    softWrap: false,
+                                  ),
+                                );
+                                break;
+                            }
+
+                            return SizedBox(width: colWidths[e.key].toDouble(), child: w);
+                          }).toList(),
+                        ),
+                      ),
                     ),
                   );
                 } else {

@@ -47,9 +47,17 @@ class RowDelete extends DirViewUpdate {
   const RowDelete(this.rowId) : super();
 }
 
+class UpdatesBegin extends DirViewUpdate {
+  const UpdatesBegin() : super();
+}
+
+class UpdatesFinished extends DirViewUpdate {
+  final String? error;
+  const UpdatesFinished({this.error}) : super();
+}
+
 class DirViewRow {
   String name;
-  String extension;
   FileType type;
   String? mimeType;
   DateTime? lastModified;
@@ -59,7 +67,6 @@ class DirViewRow {
 
   DirViewRow({
     this.name = "",
-    this.extension = "",
     this.type = FileType.unknown,
     this.mimeType,
     this.lastModified,
@@ -70,7 +77,7 @@ class DirViewRow {
 
   @override
   String toString() {
-    return "DirViewRow(name: $name, extension: $extension, type: $type, isFolderExpanded: $isFolderExpanded, depth: $depth)";
+    return "DirViewRow(name: $name, type: $type, isFolderExpanded: $isFolderExpanded, depth: $depth)";
   }
 }
 
@@ -81,7 +88,9 @@ class DirView {
 
   DirView(this.path) {
     _controller = StreamController();
-    stream = _controller.stream;
+    stream = _controller.stream.asBroadcastStream();
+
+    _controller.add(const UpdatesBegin());
 
     // Read directory initially
     Directory(path).list(followLinks: false).fold(0, (int i, file) {
@@ -98,19 +107,38 @@ class DirView {
         type = FileType.symlink;
       }
       _controller.add(RowUpdate(i, name: file.path.split("/").last, type: type));
-      file.stat().then((stat) {
-        if (file is File) {
-          _controller.add(RowUpdate(i, lastModified: stat.modified, size: stat.size));
-        } else {
-          _controller.add(RowUpdate(i, lastModified: stat.modified));
-        }
-      });
+      file.stat().then(
+        (stat) {
+          if (file is File) {
+            _controller.add(RowUpdate(i, lastModified: stat.modified, size: stat.size));
+          } else {
+            _controller.add(RowUpdate(i, lastModified: stat.modified));
+          }
+        },
+        onError: (err) {},
+      );
       return i + 1;
-    });
+    }).then(
+      (_) {
+        _controller.add(const UpdatesFinished());
+      },
+      onError: (err) {
+        print("fs err: ${err.toString()}");
+        if (err is FileSystemException && err.osError != null) {
+          _controller.add(UpdatesFinished(error: err.osError!.message));
+        } else {
+          _controller.add(UpdatesFinished(error: err.toString()));
+        }
+      },
+    );
   }
 
   DirViewRenderer render() {
     return DirViewRenderer(stream);
+  }
+
+  DirViewIsLoading isLoading() {
+    return DirViewIsLoading(stream);
   }
 }
 
@@ -124,8 +152,12 @@ class DirViewRenderer {
     stream = _controller.stream;
 
     updateStream.forEach((_update) {
-      print("Update: $_update");
-      if (_update is RowAdd) {
+      // print("Update: $_update");
+      if (_update is UpdatesBegin) {
+        // Nothing to do right now
+      } else if (_update is UpdatesFinished) {
+        // Nothing to do right now
+      } else if (_update is RowAdd) {
         RowAdd update = _update;
 
         _state.insert(update.rowId, DirViewRow());
@@ -139,11 +171,7 @@ class DirViewRenderer {
         assert(_state.length >= update.rowId, "${_state.length} >= ${update.rowId}");
 
         if (update.name != null) {
-          var parts = update.name!.split(".");
-          if (parts.length >= 2) {
-            _state[update.rowId].extension = ".${parts.removeLast()}";
-          }
-          _state[update.rowId].name = parts.join(".");
+          _state[update.rowId].name = update.name!;
         }
         if (update.type != null) {
           _state[update.rowId].type = update.type!;
@@ -162,6 +190,50 @@ class DirViewRenderer {
       }
 
       _controller.add(_state);
+    });
+  }
+}
+
+class DirViewLoadInfo {
+  final DirViewLoadState state;
+  final String? error;
+
+  const DirViewLoadInfo(this.state, {this.error});
+}
+
+enum DirViewLoadState {
+  loaded,
+  loading,
+  error,
+}
+
+class DirViewIsLoading {
+  late final Stream<DirViewLoadInfo> stream;
+  late final StreamController<DirViewLoadInfo> _controller;
+  DirViewLoadInfo _state = const DirViewLoadInfo(DirViewLoadState.loaded);
+  Timer? timer;
+
+  DirViewIsLoading(Stream<DirViewUpdate> updateStream) {
+    _controller = StreamController();
+    stream = _controller.stream;
+
+    updateStream.forEach((_update) {
+      if (_update is UpdatesBegin) {
+        timer = Timer(
+          const Duration(milliseconds: 200),
+          () {
+            _state = const DirViewLoadInfo(DirViewLoadState.loading);
+            _controller.add(_state);
+          },
+        );
+      } else if (_update is UpdatesFinished) {
+        timer?.cancel();
+
+        _state = _update.error == null
+            ? const DirViewLoadInfo(DirViewLoadState.loaded)
+            : DirViewLoadInfo(DirViewLoadState.error, error: _update.error);
+        _controller.add(_state);
+      }
     });
   }
 }
